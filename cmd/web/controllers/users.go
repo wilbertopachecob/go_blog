@@ -11,7 +11,20 @@ import (
 )
 
 func GetUsers(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("get users"))
+	database, err := db.Connect()
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+	repo := crud.NewRepository(database)
+
+	users, err := repo.FindAll()
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	responses.JSON(w, http.StatusCreated, users)
 }
 
 func GetUser(w http.ResponseWriter, r *http.Request) {
@@ -29,13 +42,13 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 func CreateUser(w http.ResponseWriter, r *http.Request) {
 	database, err := db.Connect()
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		responses.ERROR(w, http.StatusInternalServerError, err)
 		return
 	}
 	repo := crud.NewRepository(database)
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		responses.ERROR(w, http.StatusBadRequest, err)
 		return
 	}
 	defer r.Body.Close()
@@ -43,13 +56,13 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	user := models.User{}
 	err = json.Unmarshal(body, &user)
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
+		responses.ERROR(w, http.StatusUnprocessableEntity, err)
 		return
 	}
 
 	res, err := repo.Save(user)
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		responses.ERROR(w, http.StatusInternalServerError, err)
 		return
 	}
 
