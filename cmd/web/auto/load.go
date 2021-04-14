@@ -12,14 +12,20 @@ func Load() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	err = database.Debug().Migrator().DropTable(&models.User{})
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// Migrate the schema
-	err = database.AutoMigrate(&models.User{})
+	err = database.Debug().AutoMigrate(&models.User{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	for _, user := range users {
-		err = database.Create(&user).Error
+		err = database.Debug().Create(&user).Error
 		if err != nil {
 			log.Fatal(err)
 		}
